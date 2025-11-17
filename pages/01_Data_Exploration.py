@@ -1,6 +1,7 @@
 import streamlit as st
 import pandas as pd
 from components.plot_hist_kde import plot_hist_kde
+from components.file_loader import load_data_file
 
 
 st.set_page_config(
@@ -16,15 +17,7 @@ df = None
 
 uploaded_file = st.file_uploader("请上传文件", type=["csv", "txt", "xlsx", "xls"])
 if uploaded_file is not None:
-    if uploaded_file.type == "text/csv":
-        df = pd.read_csv(uploaded_file)
-    elif uploaded_file.type == "text/txt":
-        df = pd.read_csv(uploaded_file, delimiter=None)
-    else:
-        df = pd.read_excel(uploaded_file)
-    df = df.set_index(df.columns[0])
-    with st.expander("数据预览"):   
-        st.dataframe(df)
+    df = load_data_file(uploaded_file, set_index=True, show_preview=True)
 
     tab1, tab2, tab3, tab4 = st.tabs([
         "数据描述", 

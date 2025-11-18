@@ -1,13 +1,15 @@
 import streamlit as st
 import pandas as pd
-from components.plot_hist_kde import plot_hist_kde
-from components.file_loader import load_data_file
+from components.viz.plot_hist_kde import plot_hist_kde
+from components.data.file_loader import load_data_file
+from config.settings import PAGE_CONFIG
 
-
+# 页面配置
+page_config = PAGE_CONFIG["data_exploration"]
 st.set_page_config(
-    page_title="Data Exploration",
-    page_icon="🔍",
-    layout="wide",
+    page_title=page_config["page_title"],
+    page_icon=page_config["page_icon"],
+    layout=page_config["layout"],
 )
 
 st.title("Data Exploration")

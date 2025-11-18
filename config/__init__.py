@@ -1,0 +1,35 @@
+"""
+配置管理模块
+统一管理应用配置
+"""
+
+from config.settings import (
+    PROJECT_ROOT,
+    ASSETS_DIR,
+    LOG_DIR,
+    SUPPORTED_FILE_TYPES,
+    DEFAULT_PLOT_PARAMS,
+    PAGE_CONFIG,
+    LOG_LEVEL,
+)
+from config.constants import (
+    MODEL_TYPES,
+    CLUSTERING_ALGORITHMS,
+    CLASSIFICATION_ALGORITHMS,
+    REGRESSION_ALGORITHMS,
+)
+
+__all__ = [
+    'PROJECT_ROOT',
+    'ASSETS_DIR',
+    'LOG_DIR',
+    'SUPPORTED_FILE_TYPES',
+    'DEFAULT_PLOT_PARAMS',
+    'PAGE_CONFIG',
+    'LOG_LEVEL',
+    'MODEL_TYPES',
+    'CLUSTERING_ALGORITHMS',
+    'CLASSIFICATION_ALGORITHMS',
+    'REGRESSION_ALGORITHMS',
+]
+

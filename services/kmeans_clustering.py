@@ -312,3 +312,157 @@ def plot_kmeans_iteration(centroids, labels, X_train, iteration, feature_names=N
     plt.tight_layout()
     
     return fig
+
+
+def calculate_aic_bic(data, kmeans_model):
+    """
+    计算 KMeans 聚类的 AIC 和 BIC
+    
+    参数:
+        data: pandas DataFrame 或 numpy array，输入数据
+        kmeans_model: 训练好的 KMeans 模型
+    
+    返回:
+        aic: float，AIC 值
+        bic: float，BIC 值
+        sse: float，平方误差和（inertia）
+    """
+    # 转换为 numpy array
+    if isinstance(data, pd.DataFrame):
+        X = data.values
+    else:
+        X = data
+    
+    n_samples, n_features = X.shape
+    n_clusters = kmeans_model.n_clusters
+    
+    # SSE (Sum of Squared Errors) = inertia
+    sse = kmeans_model.inertia_
+    
+    # 参数数量 k
+    # 对于 KMeans: k = n_clusters * n_features (中心点坐标)
+    # 聚类分配由中心点决定，不是自由参数
+    k = n_clusters * n_features
+    
+    # 计算 AIC 和 BIC (基于最大似然估计 MLE)
+    # sigma_MLE = sqrt(SSE/n)
+    # ln_L = -n*log(sigma_MLE*sqrt(2*pi)) - SSE/2/sigma_MLE**2
+    # AIC = 2*k - 2*ln_L
+    # BIC = k*log(n) - 2*ln_L
+    if sse > 0:
+        n = n_samples
+        # 计算最大似然估计的标准差
+        sigma_MLE = np.sqrt(sse / n)
+        
+        # 计算对数似然函数
+        ln_L = -n * np.log(sigma_MLE * np.sqrt(2 * np.pi)) - sse / 2 / (sigma_MLE ** 2)
+        
+        # 计算 AIC 和 BIC
+        aic = 2 * k - 2 * ln_L
+        bic = k * np.log(n) - 2 * ln_L
+    else:
+        aic = np.inf
+        bic = np.inf
+    
+    return aic, bic, sse
+
+
+def plot_elbow_method(data, max_clusters=10, min_clusters=1, n_init='auto', 
+                       init='random', random_state=None):
+    """
+    绘制肘部法则图，包括 SSE、AIC 和 BIC
+    
+    参数:
+        data: pandas DataFrame 或 numpy array，输入数据
+        max_clusters: int，最大聚类数量，默认10
+        min_clusters: int，最小聚类数量，默认1
+        n_init: int 或 'auto'，初始化次数，默认'auto'
+        init: str，初始化方法，'random' 或 'k-means++'，默认'random'
+        random_state: int，随机种子，默认None
+    
+    返回:
+        fig: matplotlib figure 对象
+        results: dict，包含不同聚类数量的结果
+    """
+    # 转换为 numpy array
+    if isinstance(data, pd.DataFrame):
+        X = data.values
+    else:
+        X = data
+    
+    n_samples, n_features = X.shape
+    k_range = range(min_clusters, max_clusters + 1)
+    
+    sse_values = []
+    aic_values = []
+    bic_values = []
+    
+    for k in k_range:
+        # 如果 n_init 是 'auto'，转换为整数或使用默认值
+        n_init_value = n_init if n_init != 'auto' else 10
+        
+        kmeans = KMeans(
+            n_clusters=k, 
+            init=init,
+            n_init=n_init_value, 
+            max_iter=300,
+            tol=1e-04,
+            random_state=random_state
+        )
+        kmeans.fit(X)
+        
+        aic, bic, sse = calculate_aic_bic(X, kmeans)
+        sse_values.append(sse)
+        aic_values.append(aic)
+        bic_values.append(bic)
+    
+    # 创建图表
+    fig, axes = plt.subplots(1, 3, figsize=(18, 5))
+    
+    # SSE (肘部法则) - 参考代码风格
+    axes[0].plot(k_range, sse_values, marker='x', linewidth=2, markersize=8)
+    axes[0].set_xlabel('聚类数量 (k)', fontsize=12)
+    axes[0].set_ylabel('Distortion (SSE)', fontsize=12)
+    axes[0].set_title('肘部法则 (SSE)', fontsize=14, fontweight='bold')
+    axes[0].grid(linestyle='--', linewidth=0.25, color=[0.5, 0.5, 0.5])
+    axes[0].set_xticks(k_range)
+    
+    # AIC
+    axes[1].plot(k_range, aic_values, marker='x', linewidth=2, markersize=8, color='r')
+    axes[1].set_xlabel('聚类数量 (k)', fontsize=12)
+    axes[1].set_ylabel('AIC', fontsize=12)
+    axes[1].set_title('AIC (赤池信息准则)', fontsize=14, fontweight='bold')
+    axes[1].grid(linestyle='--', linewidth=0.25, color=[0.5, 0.5, 0.5])
+    axes[1].set_xticks(k_range)
+    # 标记最小AIC值
+    min_aic_idx = np.argmin(aic_values)
+    axes[1].plot(k_range[min_aic_idx], aic_values[min_aic_idx], 'r*', 
+                markersize=20, label=f'最小 AIC: k={k_range[min_aic_idx]}')
+    axes[1].legend()
+    
+    # BIC
+    axes[2].plot(k_range, bic_values, marker='x', linewidth=2, markersize=8, color='g')
+    axes[2].set_xlabel('聚类数量 (k)', fontsize=12)
+    axes[2].set_ylabel('BIC', fontsize=12)
+    axes[2].set_title('BIC (贝叶斯信息准则)', fontsize=14, fontweight='bold')
+    axes[2].grid(linestyle='--', linewidth=0.25, color=[0.5, 0.5, 0.5])
+    axes[2].set_xticks(k_range)
+    # 标记最小BIC值
+    min_bic_idx = np.argmin(bic_values)
+    axes[2].plot(k_range[min_bic_idx], bic_values[min_bic_idx], 'g*', 
+                markersize=20, label=f'最小 BIC: k={k_range[min_bic_idx]}')
+    axes[2].legend()
+    
+    plt.tight_layout()
+    
+    # 准备结果字典
+    results = {
+        'k_range': list(k_range),
+        'sse': sse_values,
+        'aic': aic_values,
+        'bic': bic_values,
+        'optimal_k_aic': k_range[min_aic_idx],
+        'optimal_k_bic': k_range[min_bic_idx]
+    }
+    
+    return fig, results

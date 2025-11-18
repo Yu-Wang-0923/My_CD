@@ -2,7 +2,7 @@ import streamlit as st
 import pandas as pd
 
 
-def load_data_file(uploaded_file, set_index=True, show_preview=True, preview_expander_title="数据预览"):
+def load_data_file(uploaded_file, set_index=True, show_preview=True, preview_expander_title="数据展示"):
     """
     加载上传的文件并返回DataFrame
     
@@ -40,6 +40,7 @@ def load_data_file(uploaded_file, set_index=True, show_preview=True, preview_exp
         if show_preview:
             with st.expander(preview_expander_title):
                 st.dataframe(df)
+                st.write(f"**数据形状:** {df.shape[0]} 行 × {df.shape[1]} 列")
         
         return df
         
